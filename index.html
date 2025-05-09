@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mfumo wa Malipo ya Umeme</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Firebase SDK (Compatibility Mode) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #e0e7ff;
+            color: #1e293b;
+            position: relative;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 2000;
+            transition: opacity 0.5s;
+            overflow: hidden;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #1a73e8;
+            border-right: 8px solid #28a745;
+            border-bottom: 8px solid #dc3545;
+            border-left: 8px solid #ffc107;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-title {
+            color: white;
+            font-size: 2em;
+            margin: 20px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .loading-message {
+            color: white;
+            font-size: 1.2em;
+            text-align: center;
+        }
+
+        .rain {
+            position: absolute;
+            width: 2px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            animation: fall linear infinite;
+        }
+
+        .rain:nth-child(1) { left: 10%; animation-duration: 1s; }
+        .rain:nth-child(2) { left: 20%; animation-duration: 1.2s; }
+        .rain:nth-child(3) { left: 30%; animation-duration: 0.8s; }
+        .rain:nth-child(4) { left: 40%; animation-duration: 1.1s; }
+        .rain:nth-child(5) { left: 50%; animation-duration: 0.9s; }
+        .rain:nth-child(6) { left: 60%; animation-duration: 1.3s; }
+        .rain:nth-child(7) { left: 70%; animation-duration: 1s; }
+        .rain:nth-child(8) { left: 80%; animation-duration: 1.2s; }
+        .rain:nth-child(9) { left: 90%; animation-duration: 0.8s; }
+
+        @keyframes fall {
+            0% { transform: translateY(-100vh); opacity: 0.7; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+
+        .loading-particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .loading-particle:nth-child(1) { width: 10px; height: 10px; left: 15%; animation: float 15s infinite; }
+        .loading-particle:nth-child(2) { width: 15px; height: 15px; left: 35%; animation: float 20s infinite; }
+        .loading-particle:nth-child(3) { width: 8px; height: 8px; left: 55%; animation: float 18s infinite; }
+        .loading-particle:nth-child(4) { width: 12px; height: 12px; left: 75%; animation: float 22s infinite; }
+
+        @keyframes float {
+            0% { transform: translateY(0) translateX(0); opacity: 0.7; }
+            50% { transform: translateY(-100px) translateX(50px); opacity: 0.3; }
+            100% { transform: translateY(0) translateX(0); opacity: 0.7; }
+        }
+
+        .header {
+            position: relative;
+            background: linear-gradient(135deg, #6e8efb, #a777e3, #ff6f61);
+            background-size: 200% 200%;
+            animation: gradientShift 10s ease infinite;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            text-align: center;
+            overflow: hidden;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .header-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://www.transparenttextures.com/patterns/stardust.png');
+            animation: moveBackground 20s linear infinite;
+            opacity: 0.3;
+            z-index: 0;
+        }
+
+        @keyframes moveBackground {
+            0% { background-position: 0 0; }
+            100% { background-position: 200% 200%; }
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .particle:nth-child(1) { width: 10px; height: 10px; left: 10%; animation: float 15s infinite; }
+        .particle:nth-child(2) { width: 15px; height: 15px; left: 30%; animation: float 20s infinite; }
+        .particle:nth-child(3) { width: 8px; height: 8px; left: 50%; animation: float 18s infinite; }
+        .particle:nth-child(4) { width: 12px; height: 12px; left: 70%; animation: float 22s infinite; }
+
+        .container {
+            background-color: #f1f5f9;
+            padding: 25px;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            color: #1a73e8;
+            font-size: 2em;
+            margin: 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        .welcome-message {
+            color: white;
+            font-size: 1.2em;
+            margin: 10px 0 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        .current-date {
+            color: white;
+            font-size: 1em;
+            margin: 5px 0 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        h3 {
+            color: #1a73e8;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #1e293b;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+            font-size: 16px;
+            background-color: #ffffea;
+            box-sizing: border-box;
+        }
+
+        input[readonly] {
+            background-color: #e2e8f0;
+            cursor: not-allowed;
+        }
+
+        button {
+            background-color: #1a73e8;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #1557b0;
+        }
+
+        .pay-btn {
+            background-color: #28a745;
+            margin-right: 5px;
+        }
+
+        .pay-btn:hover {
+            background-color: #218838;
+        }
+
+        .delete-btn, .clear-debt-btn {
+            background-color: #dc3545;
+        }
+
+        .delete-btn:hover, .clear-debt-btn:hover {
+            background-color: #c82333;
+        }
+
+        .back-btn {
+            background-color: #6c757d;
+        }
+
+        .back-btn:hover {
+            background-color: #5a6268;
+        }
+
+        .admin-btn {
+            background-color: #ffc107;
+        }
+
+        .admin-btn:hover {
+            background-color: #e0a800;
+        }
+
+        .history-btn {
+            background-color: #17a2b8;
+        }
+
+        .history-btn:hover {
+            background-color: #138496;
+        }
+
+        .round-controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .debtors-list {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff3f3;
+            border-radius: 5px;
+        }
+
+        .debtors-toggle {
+            background-color: #ff4444;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+        .debtors-toggle:hover {
+            background-color: #cc0000;
+        }
+
+        .debtors-details {
+            display: none;
+        }
+
+        .debtors-details.active {
+            display: block;
+        }
+
+        .debt-summary {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #f1f5f9;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #1a73e8;
+            color: white;
+        }
+
+        tr {
+            background-color: #f8fafc;
+            transition: background-color 0.3s;
+        }
+
+        tr:nth-child(even) {
+            background-color: #e2e8f0;
+        }
+
+        tr:hover {
+            background-color: #cbd5e1;
+        }
+
+        .tenant-name {
+            cursor: pointer;
+            color: #1a73e8;
+            text-decoration: underline;
+        }
+
+        .tenant-name:hover {
+            color: #1557b0;
+        }
+
+        .days-normal {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .days-warning {
+            color: #ffc107;
+            font-weight: bold;
+        }
+
+        .overdue-row {
+            background-color: #ffcaaa90;
+            color: #b900ff;
+        }
+
+        .overdue {
+            font-weight: bold;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0% { color: #dc3545; opacity: 1; }
+            50% { color: #dc3545; opacity: 0.3; }
+            100% { color: #dc3545; opacity: 1; }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .powered-by {
+            animation: rainbow 20s infinite;
+            font-weight: bold;
+        }
+
+        @keyframes rainbow {
+            0% { color: #ff0000; }
+            66% { color: #0000ff; }
+            83% { color: #4b0082; }
+            100% { color: #9400d3; }
+        }
+
+        .popup {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .popup-content {
+            background: linear-gradient(135deg, #ffffff, #e0e7ff);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .popup-content h3 {
+            margin-top: 0;
+            color: #1a73e8;
+        }
+
+        .popup-content input, .popup-content select {
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .popup-content button {
+            margin: 5px;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            h2 {
+                font-size: 1.5em;
+            }
+
+            .header {
+                height: 150px;
+            }
+
+            .welcome-message, .current-date {
+                font-size: 1em;
+            }
+
+            .form-group {
+                margin-bottom: 15px;
+            }
+
+            input, select, button {
+                font-size: 14px;
+                padding: 8px;
+            }
+
+            .round-controls {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            button {
+                width: 100%;
+                padding: 10px;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px;
+                display: block;
+                text-align: left;
+            }
+
+            th {
+                display: none;
+            }
+
+            tr {
+                margin-bottom: 10px;
+                border-bottom: 1px solid #cbd5e1;
+            }
+
+            td {
+                position: relative;
+                padding-left: 50%;
+            }
+
+            td:before {
+                content: attr(data-label);
+                position: absolute;
+                left: 10px;
+                width: 45%;
+                font-weight: bold;
+            }
+
+            .pay-btn, .delete-btn, .clear-debt-btn {
+                display: inline-block;
+                width: auto;
+                margin: 5px 0;
+            }
+
+            .popup-content {
+                max-width: 80%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="rain"></div>
+        <div class="rain"></div>
+        <div class="rain"></div>
+        <div class="rain"></div>
+        <div class="rain"></div>
+        <div class="rain"></div>
+        <div class="rain"></div>
+        <div class="rain"></div>
+        <div class="rain"></div>
+        <div class="loading-particle"></div>
+        <div class="loading-particle"></div>
+        <div class="loading-particle"></div>
+        <div class="loading-particle"></div>
+        <div class="loader"></div>
+        <div class="loading-title">Malosha Luku Credit</div>
+        <div class="loading-message">Tunaandaa Mfumo wa Malipo kwa Ajili Yako!</div>
+    </div>
+
+    <div class="header">
+        <div class="header-animation"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <h2><i class="fas fa-bolt"></i> DAVID LUKU CREDIT⚡️</h2>
+        <div class="welcome-message">Karibu! Tuchangie Umeme kwa Pamoja</div>
+        <div class="current-date" id="currentDate">Tarehe: Loading...</div>
+    </div>
+    <div class="container">
+        <div class="round-controls">
+            <button onclick="showStartRoundPopup()"><i class="fas fa-play"></i> Anza Round Mpya</button>
+            <button onclick="showEndRoundPopup()"><i class="fas fa-stop"></i> Maliza Round</button>
+            <button onclick="copySMS()"><i class="fas fa-sms"></i> Copy SMS</button>
+            <button class="admin-btn" onclick="showAdminPopup()"><i class="fas fa-user-shield"></i> KWA MATUMIZI DAVID TU</button>
+            <button class="history-btn" onclick="showTenantSelectionPopup()"><i class="fas fa-history"></i> Tarifa za Malipo za Wapangaji</button>
+        </div>
+
+        <form id="paymentForm">
+            <div class="form-group">
+                <label>Jina la Mpangaji:</label>
+                <input type="text" id="tenantName" required>
+            </div>
+            <div class="form-group">
+                <label>Kiasi (TZS):</label>
+                <input type="number" id="amount" required>
+            </div>
+            <div class="form-group">
+                <label>Tarehe:</label>
+                <input type="date" id="date" required>
+            </div>
+            <button type="submit"><i class="fas fa-save"></i> HIFADHI MALIPO 💵</button>
+        </form>
+
+        <div class="debtors-list">
+            <h3>Wanaodaiwa</h3>
+            <div class="debtors-toggle" onclick="toggleDebtors()">Onyesha/Ficha Wanaodaiwa</div>
+            <div class="debtors-details" id="debtorsDetails">
+                <div class="debt-summary" id="debtSummary"></div>
+                <ul id="debtorsList"></ul>
+            </div>
+        </div>
+
+        <h3><i class="fas fa-history"></i> HISTORY YA MALIPO YA KILA MPANGAJI 🏥</h3>
+        <table id="paymentTable">
+            <thead>
+                <tr>
+                    <th>Jina</th>
+                    <th>Kiasi</th>
+                    <th>Tarehe</th>
+                    <th>Siku Zilizobaki</th>
+                    <th>Round Info</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="paymentList"></tbody>
+        </table>
+    </div>
+
+    <!-- Popups -->
+    <div class="popup" id="startRoundPopup">
+        <div class="popup-content">
+            <h3>Anza Round Mpya</h3>
+            <div class="form-group">
+                <label>Tarehe ya Kuanza:</label>
+                <input type="date" id="startRoundDate" required>
+            </div>
+            <button onclick="startNewRound()">Anza Round</button>
+            <button class="back-btn" onclick="closePopup('startRoundPopup')">Kurudi Nyuma</button>
+        </div>
+    </div>
+
+    <div class="popup" id="endRoundPopup">
+        <div class="popup-content">
+            <h3>Maliza Round</h3>
+            <div class="form-group">
+                <label>Tarehe ya Kumaliza:</label>
+                <input type="date" id="endRoundDate" required>
+            </div>
+            <button onclick="endRound()">Maliza Round</button>
+            <button class="back-btn" onclick="closePopup('endRoundPopup')">Kurudi Nyuma</button>
+        </div>
+    </div>
+
+    <div class="popup" id="notificationPopup">
+        <div class="popup-content">
+            <h3>Taarifa</h3>
+            <p id="notificationMessage"></p>
+        </div>
+    </div>
+
+    <div class="popup" id="deleteConfirmationPopup">
+        <div class="popup-content">
+            <h3>Futa Malipo</h3>
+            <p id="deleteMessage"></p>
+            <button onclick="confirmDelete()">Futa</button>
+            <button class="back-btn" onclick="closePopup('deleteConfirmationPopup')">Kurudi Nyuma</button>
+        </div>
+    </div>
+
+    <div class="popup" id="adminPopup">
+        <div class="popup-content">
+            <h3>Admin Login</h3>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="adminPassword" required>
+            </div>
+            <button onclick="loginAdmin()">Ingia</button>
+            <button class="back-btn" onclick="closePopup('adminPopup')">Kurudi Nyuma</button>
+        </div>
+    </div>
+
+    <div class="popup" id="adminSettingsPopup">
+        <div class="popup-content">
+            <h3>Admin Settings</h3>
+            <div class="form-group">
+                <label>New Password:</label>
+                <input type="password" id="newPassword">
+            </div>
+            <div class="form-group">
+                <label>Protect Hifadhi Malipo:</label>
+                <input type="checkbox" id="protectSavePayment">
+            </div>
+            <div class="form-group">
+                <label>Protect Lipa:</label>
+                <input type="checkbox" id="protectPay">
+            </div>
+            <div class="form-group">
+                <label>Protect Futa:</label>
+                <input type="checkbox" id="protectDelete">
+            </div>
+            <div class="form-group">
+                <label>Protect Anza Round:</label>
+                                <input type="checkbox" id="protectStartRound">
+            </div>
+            <div class="form-group">
+                <label>Protect Maliza Round:</label>
+                <input type="checkbox" id="protectEndRound">
+            </div>
+            <div class="form-group">
+                <label>Protect Copy SMS:</label>
+                <input type="checkbox" id="protectCopySMS">
+            </div>
+            <div class="form-group">
+                <label>Protect Futa Deni:</label>
+                <input type="checkbox" id="protectClearDebt">
+            </div>
+            <button onclick="saveAdminSettings()">Hifadhi</button>
+            <button class="back-btn" onclick="closePopup('adminSettingsPopup')">Kurudi Nyuma</button>
+        </div>
+    </div>
+
+    <div class="popup" id="passwordPromptPopup">
+        <div class="popup-content">
+            <h3>Ingiza Password</h3>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="actionPassword" required>
+            </div>
+            <button onclick="verifyActionPassword()">Thibitisha</button>
+            <button class="back-btn" onclick="closePopup('passwordPromptPopup')">Kurudi Nyuma</button>
+        </div>
+    </div>
+
+    <div class="popup" id="tenantHistoryPopup">
+        <div class="popup-content">
+            <h3>Historia ya Malipo</h3>
+            <div id="tenantHistoryContent"></div>
+            <button class="back-btn" onclick="closePopup('tenantHistoryPopup')">Kurudi Nyuma</button>
+        </div>
+    </div>
+
+    <div class="popup" id="tenantSelectionPopup">
+        <div class="popup-content">
+            <h3>Chagua Mpangaji</h3>
+            <div class="form-group">
+                <label>Jina la Mpangaji:</label>
+                <select id="tenantSelect" onchange="showAllPayments()">
+                    <option value="">-- Chagua Jina --</option>
+                </select>
+            </div>
+            <button class="back-btn" onclick="closePopup('tenantSelectionPopup')">Kurudi Nyuma</button>
+        </div>
+    </div>
+
+    <div class="popup" id="allPaymentsPopup">
+        <div class="popup-content">
+            <h3>Tarifa za Malipo</h3>
+            <table id="allPaymentsTable">
+                <thead>
+                    <tr>
+                        <th>Jina</th>
+                        <th>Kiasi</th>
+                        <th>Tarehe</th>
+                        <th>Round Info</th>
+                    </tr>
+                </thead>
+                <tbody id="allPaymentsList"></tbody>
+            </table>
+            <button class="back-btn" onclick="closePopup('allPaymentsPopup')">Kurudi Nyuma</button>
+        </div>
+    </div>
+
+    <div class="popup" id="clearDebtConfirmationPopup">
+        <div class="popup-content">
+            <h3>Futa Deni</h3>
+            <p id="clearDebtMessage"></p>
+            <button onclick="confirmClearDebt()">Futa</button>
+            <button class="back-btn" onclick="closePopup('clearDebtConfirmationPopup')">Kurudi Nyuma</button>
+        </div>
+    </div>
+
+    <div class="footer">
+        This program powered by <span class="powered-by">DAVID MALOSHA</span>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBph0eIqVX1FP33kQIx-mHg4qKgzqSH59I",
+            authDomain: "umeme-ddcae.firebaseapp.com",
+            projectId: "umeme-ddcae",
+            storageBucket: "umeme-ddcae.firebasestorage.app",
+            messagingSenderId: "943592815512",
+            appId: "1:943592815512:web:b5f56a32da4e3f720849ed",
+            measurementId: "G-B9Z5ZEC3QB",
+            databaseURL: "https://umeme-ddcae-default-rtdb.europe-west1.firebasedatabase.app"
+        };
+
+        // Initialize Firebase
+        let db = null;
+        let isFirebaseInitialized = false;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+            isFirebaseInitialized = true;
+            console.log('Firebase initialized successfully');
+        } catch (err) {
+            console.error('Failed to initialize Firebase:', err);
+            showNotification('Failed to connect to Firebase. Running in offline mode.');
+        }
+
+        // Global Variables
+        let editIndex = -1;
+        let deleteIndex = -1;
+        let clearDebtIndex = -1;
+        let actionCallback = null;
+        const ROUND_DURATION = 7;
+        const DEBT_INCREMENT = 1000;
+        const DEBT_INTERVAL = 7;
+        let adminPassword = '1340';
+        let protectActions = {
+            savePayment: false,
+            pay: false,
+            delete: false,
+            startRound: false,
+            endRound: false,
+            copySMS: false,
+            clearDebt: false
+        };
+
+        // Default State
+        const defaultState = {
+            payments: [],
+            round: null,
+            debtors: [],
+            tenants: [],
+            rounds: [],
+            settings: {
+                adminPassword: '1340',
+                protectActions: {
+                    savePayment: false,
+                    pay: false,
+                    delete: false,
+                    startRound: false,
+                    endRound: false,
+                    copySMS: false,
+                    clearDebt: false
+                }
+            }
+        };
+
+        // Loading Screen
+        window.onload = async function() {
+            console.log('Starting system initialization');
+            try {
+                await initializeSystem();
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                console.log('System initialized, hiding loading overlay');
+                updateDate();
+                setInterval(() => updateDebts(), 24 * 60 * 60 * 1000);
+            } catch (err) {
+                console.error('Initialization error:', err);
+                showNotification('Error loading system. Running in offline mode.');
+                await initializeSystem(true); // Force offline mode
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                updateDate();
+                setInterval(() => updateDebts(), 24 * 60 * 60 * 1000);
+            }
+        };
+
+        // Initialize System
+        async function initializeSystem(offlineMode = false) {
+            console.log('Initializing system, offlineMode:', offlineMode);
+            let state = loadLocalState();
+            console.log('Loaded local state:', state);
+
+            if (!isValidState(state)) {
+                console.warn('Invalid local state, resetting to default');
+                state = { ...defaultState };
+                saveLocalState(state);
+            }
+
+            // Apply settings from state
+            adminPassword = state.settings.adminPassword || '1340';
+            protectActions = { ...state.settings.protectActions };
+
+            // Clean up duplicate tenants
+            state.tenants = deduplicateTenants(state.tenants);
+
+            if (!offlineMode && isFirebaseInitialized && navigator.onLine) {
+                try {
+                    state = await syncWithFirebase(state);
+                    setupFirebaseListeners();
+                    console.log('Firebase sync completed:', state);
+                } catch (err) {
+                    console.error('Firebase sync failed:', err);
+                    showNotification('Failed to sync with Firebase. Using local data.');
+                }
+            }
+
+            // Initialize UI
+            updateDate();
+            displayPayments(state);
+            displayDebtors(state);
+            populateTenantSelect(state);
+            updateDebts(state);
+            return state;
+        }
+
+        // Deduplicate Tenants
+        function deduplicateTenants(tenants) {
+            const seen = new Map();
+            tenants.forEach(tenant => {
+                const lowerName = tenant.toLowerCase();
+                if (!seen.has(lowerName)) {
+                    seen.set(lowerName, tenant);
+                }
+            });
+            const uniqueTenants = Array.from(seen.values());
+            console.log('Deduplicated tenants:', uniqueTenants);
+            return uniqueTenants;
+        }
+
+        // Validate State
+        function isValidState(state) {
+            try {
+                if (!state) return false;
+                if (!Array.isArray(state.payments)) return false;
+                if (state.round !== null && typeof state.round !== 'object') return false;
+                if (!Array.isArray(state.debtors)) return false;
+                if (!Array.isArray(state.tenants)) return false;
+                if (!Array.isArray(state.rounds)) return false;
+                if (!state.settings || typeof state.settings !== 'object') return false;
+                if (typeof state.settings.adminPassword !== 'string') return false;
+                if (typeof state.settings.protectActions !== 'object') return false;
+                return true;
+            } catch (err) {
+                console.error('State validation error:', err);
+                return false;
+            }
+        }
+
+        // Load Local State
+        function loadLocalState() {
+            try {
+                const stateStr = localStorage.getItem('systemState');
+                if (!stateStr) {
+                    console.log('No local state found, returning default');
+                    return { ...defaultState };
+                }
+                const state = JSON.parse(stateStr);
+                if (isValidState(state)) {
+                    console.log('Valid local state loaded');
+                    return state;
+                }
+                console.warn('Invalid local state, returning default');
+                return { ...defaultState };
+            } catch (err) {
+                console.error('Error loading local state:', err);
+                return { ...defaultState };
+            }
+        }
+
+        // Save Local State
+        function saveLocalState(state) {
+            try {
+                if (!isValidState(state)) {
+                    console.warn('Attempted to save invalid state, resetting to default');
+                    state = { ...defaultState };
+                }
+                localStorage.setItem('systemState', JSON.stringify(state));
+                console.log('Local state saved:', state);
+            } catch (err) {
+                console.error('Error saving local state:', err);
+                showNotification('Error saving local data.');
+            }
+        }
+
+        // Save Firebase State
+        function saveFirebaseState(state) {
+            if (isFirebaseInitialized && navigator.onLine && db) {
+                try {
+                    db.ref('state').set(state).then(() => {
+                        console.log('Firebase state saved:', state);
+                    }).catch(err => {
+                        console.error('Failed to save to Firebase:', err);
+                        showNotification('Failed to save data to Firebase.');
+                    });
+                } catch (err) {
+                    console.error('Firebase save error:', err);
+                    showNotification('Error saving data to Firebase.');
+                }
+            }
+        }
+
+        // Sync with Firebase
+        async function syncWithFirebase(localState) {
+            if (!isFirebaseInitialized || !navigator.onLine || !db) {
+                console.log('Firebase not initialized or offline, skipping sync');
+                return localState;
+            }
+
+            try {
+                const snapshot = await db.ref('state').once('value');
+                let firebaseState = snapshot.val();
+                console.log('Firebase state retrieved:', firebaseState);
+
+                if (!firebaseState || !isValidState(firebaseState)) {
+                    console.warn('Invalid Firebase state, resetting to default');
+                    firebaseState = { ...defaultState };
+                    await db.ref('state').set(firebaseState);
+                }
+
+                // Merge states: prioritize non-empty arrays and valid data
+                const mergedState = {
+                    payments: firebaseState.payments.length > localState.payments.length ? firebaseState.payments : localState.payments,
+                    round: firebaseState.round && typeof firebaseState.round === 'object' ? firebaseState.round : localState.round,
+                    debtors: firebaseState.debtors.length > localState.debtors.length ? firebaseState.debtors : localState.debtors,
+                    tenants: deduplicateTenants(firebaseState.tenants.length > localState.tenants.length ? firebaseState.tenants : localState.tenants),
+                    rounds: firebaseState.rounds.length > localState.rounds.length ? firebaseState.rounds : localState.rounds,
+                    settings: {
+                        adminPassword: firebaseState.settings.adminPassword || localState.settings.adminPassword,
+                        protectActions: { ...firebaseState.settings.protectActions, ...localState.settings.protectActions }
+                    }
+                };
+
+                console.log('Merged state:', mergedState);
+                saveLocalState(mergedState);
+                saveFirebaseState(mergedState);
+                return mergedState;
+            } catch (err) {
+                console.error('Firebase sync error:', err);
+                showNotification('Failed to sync with Firebase. Using local data.');
+                return localState;
+            }
+        }
+
+        // Setup Firebase Listeners
+        function setupFirebaseListeners() {
+            if (isFirebaseInitialized && db) {
+                try {
+                    db.ref('state').on('value', snapshot => {
+                        const firebaseState = snapshot.val();
+                        console.log('Firebase data received:', firebaseState);
+
+                        if (!firebaseState || !isValidState(firebaseState)) {
+                            console.warn('Invalid Firebase data received, resetting Firebase state');
+                            const defaultFirebaseState = { ...defaultState };
+                            db.ref('state').set(defaultFirebaseState);
+                            return;
+                        }
+
+                        // Deduplicate tenants before saving
+                        firebaseState.tenants = deduplicateTenants(firebaseState.tenants);
+                        saveLocalState(firebaseState);
+                        adminPassword = firebaseState.settings.adminPassword;
+                        protectActions = { ...firebaseState.settings.protectActions };
+                        displayPayments(firebaseState);
+                        displayDebtors(firebaseState);
+                        populateTenantSelect(firebaseState);
+                        console.log('UI updated from Firebase data');
+                    }, err => {
+                        console.error('Firebase listener error:', err);
+                        showNotification('Error listening to Firebase updates.');
+                    });
+                } catch (err) {
+                    console.error('Firebase listener setup error:', err);
+                    showNotification('Error setting up Firebase listener.');
+                }
+            }
+        }
+
+        // Update Current Date
+        function updateDate() {
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('sw-TZ', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+            document.getElementById('currentDate').textContent = `Tarehe: ${dateStr}`;
+            console.log('Date updated:', dateStr);
+        }
+
+        // Show Notification
+        function showNotification(message) {
+            console.log('Notification:', message);
+            document.getElementById('notificationMessage').textContent = message;
+            const popup = document.getElementById('notificationPopup');
+            popup.style.display = 'block';
+            setTimeout(() => {
+                popup.style.display = 'none';
+                console.log('Notification hidden');
+            }, 3000);
+        }
+
+        // Close Popup
+        function closePopup(popupId) {
+            document.getElementById(popupId).style.display = 'none';
+            console.log(`Closed popup: ${popupId}`);
+        }
+
+        // Show Start Round Popup
+        function showStartRoundPopup() {
+            if (protectActions.startRound) {
+                promptPassword('startRound', () => {
+                    document.getElementById('startRoundDate').value = new Date().toISOString().split('T')[0];
+                    document.getElementById('startRoundPopup').style.display = 'block';
+                    console.log('Start round popup shown');
+                });
+            } else {
+                document.getElementById('startRoundDate').value = new Date().toISOString().split('T')[0];
+                document.getElementById('startRoundPopup').style.display = 'block';
+                console.log('Start round popup shown');
+            }
+        }
+
+        // Show End Round Popup
+        function showEndRoundPopup() {
+            if (protectActions.endRound) {
+                promptPassword('endRound', () => {
+                    document.getElementById('endRoundDate').value = new Date().toISOString().split('T')[0];
+                    document.getElementById('endRoundPopup').style.display = 'block';
+                    console.log('End round popup shown');
+                });
+            } else {
+                document.getElementById('endRoundDate').value = new Date().toISOString().split('T')[0];
+                document.getElementById('endRoundPopup').style.display = 'block';
+                console.log('End round popup shown');
+            }
+        }
+
+        // Show Admin Popup
+        function showAdminPopup() {
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('adminPopup').style.display = 'block';
+            console.log('Admin popup shown');
+        }
+
+        // Login Admin
+        function loginAdmin() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === adminPassword) {
+                closePopup('adminPopup');
+                document.getElementById('newPassword').value = '';
+                document.getElementById('protectSavePayment').checked = protectActions.savePayment;
+                document.getElementById('protectPay').checked = protectActions.pay;
+                document.getElementById('protectDelete').checked = protectActions.delete;
+                document.getElementById('protectStartRound').checked = protectActions.startRound;
+                document.getElementById('protectEndRound').checked = protectActions.endRound;
+                document.getElementById('protectCopySMS').checked = protectActions.copySMS;
+                document.getElementById('protectClearDebt').checked = protectActions.clearDebt;
+                document.getElementById('adminSettingsPopup').style.display = 'block';
+                console.log('Admin logged in, settings popup shown');
+            } else {
+                showNotification('Password si sahihi!');
+                console.log('Admin login failed: incorrect password');
+            }
+        }
+
+        // Save Admin Settings
+        function saveAdminSettings() {
+            const newPassword = document.getElementById('newPassword').value;
+            const state = loadLocalState();
+            if (newPassword) {
+                adminPassword = newPassword;
+                state.settings.adminPassword = newPassword;
+                console.log('Admin password updated');
+            }
+            protectActions = {
+                savePayment: document.getElementById('protectSavePayment').checked,
+                pay: document.getElementById('protectPay').checked,
+                delete: document.getElementById('protectDelete').checked,
+                startRound: document.getElementById('protectStartRound').checked,
+                endRound: document.getElementById('protectEndRound').checked,
+                copySMS: document.getElementById('protectCopySMS').checked,
+                clearDebt: document.getElementById('protectClearDebt').checked
+            };
+            state.settings.protectActions = { ...protectActions };
+            saveLocalState(state);
+            saveFirebaseState(state);
+            closePopup('adminSettingsPopup');
+            showNotification('Mipangilio imehifadhiwa!');
+            console.log('Admin settings saved:', protectActions);
+        }
+
+        // Prompt Password
+        function promptPassword(action, callback) {
+            actionCallback = { action, callback };
+            document.getElementById('actionPassword').value = '';
+            document.getElementById('passwordPromptPopup').style.display = 'block';
+            console.log(`Password prompt shown for action: ${action}`);
+        }
+
+        // Verify Action Password
+        function verifyActionPassword() {
+            const password = document.getElementById('actionPassword').value;
+            if (password === adminPassword) {
+                closePopup('passwordPromptPopup');
+                actionCallback.callback();
+                console.log('Action password verified');
+            } else {
+                showNotification('Password si sahihi!');
+                console.log('Action password verification failed');
+            }
+        }
+
+        // Payment Form Submission
+        document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            console.log('Payment form submitted');
+
+            const action = async () => {
+                const state = loadLocalState();
+                const inputName = document.getElementById('tenantName').value.trim();
+                const lowerInputName = inputName.toLowerCase();
+                const amount = parseFloat(document.getElementById('amount').value);
+                const date = document.getElementById('date').value;
+
+                console.log('Processing payment:', { inputName, amount, date });
+
+                // Find existing tenant (case-insensitive)
+                let tenantName = inputName;
+                const existingTenant = state.tenants.find(t => t.toLowerCase() === lowerInputName);
+                if (existingTenant) {
+                    tenantName = existingTenant; // Use existing case
+                    console.log(`Using existing tenant name: ${tenantName}`);
+                } else {
+                    // Add new tenant only if not in tenants
+                    state.tenants.push(inputName);
+                    console.log(`Added new tenant: ${inputName}`);
+                }
+
+                const daysDue = amount === 1000 ? 7 : amount === 2000 ? 14 : amount === 3000 ? 21 : amount === 4000 ? 30 : 7;
+                const dueDate = new Date(date);
+                dueDate.setDate(dueDate.getDate() + daysDue);
+
+                const payment = {
+                    name: tenantName,
+                    amount: amount,
+                    date: date,
+                    dueDate: dueDate.toISOString().split('T')[0],
+                    paid: true,
+                    roundStart: state.round ? state.round.startDate : null
+                };
+
+                // Check for duplicate payment
+                const isDuplicate = state.payments.some(p => 
+                    p.name.toLowerCase() === lowerInputName &&
+                    p.date === date &&
+                    p.amount === amount
+                );
+                if (isDuplicate && editIndex === -1) {
+                    showNotification('Malipo haya tayari yamehifadhiwa!');
+                    console.log('Duplicate payment detected, skipping');
+                    return;
+                }
+
+                // Handle debt reduction
+                const debtor = state.debtors.find(d => d.name.toLowerCase() === lowerInputName);
+                if (debtor) {
+                    const debtAmount = calculateDebtAmount(lowerInputName, state);
+                    const newDebt = Math.max(0, debtAmount - amount);
+                    if (newDebt === 0) {
+                        state.debtors = state.debtors.filter(d => d.name.toLowerCase() !== lowerInputName);
+                        console.log(`Debt cleared for ${tenantName}`);
+                    } else {
+                        debtor.debtHistory.push({
+                            date: date,
+                            amount: newDebt
+                        });
+                        console.log(`Debt updated for ${tenantName}: ${newDebt} TZS`);
+                    }
+                }
+
+                if (editIndex === -1) {
+                    state.payments.push(payment);
+                    console.log('New payment added');
+                } else {
+                    state.payments[editIndex] = payment;
+                    editIndex = -1;
+                    console.log('Payment updated at index:', editIndex);
+                }
+
+                // Deduplicate tenants
+                state.tenants = deduplicateTenants(state.tenants);
+
+                saveLocalState(state);
+                saveFirebaseState(state);
+                this.reset();
+                document.getElementById('tenantName').removeAttribute('readonly');
+                displayPayments(state);
+                displayDebtors(state);
+                populateTenantSelect(state);
+                showNotification('Malipo yamehifadhiwa!');
+                document.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-save"></i> HIFADHI MALIPO 💵';
+            };
+
+            if (protectActions.savePayment) {
+                promptPassword('savePayment', action);
+            } else {
+                await action();
+            }
+        });
+
+        // Calculate Days Remaining
+        function calculateDaysRemaining(dueDate) {
+            const today = new Date();
+            const due = new Date(dueDate);
+            const diffTime = due - today;
+            const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            console.log(`Calculated days remaining for dueDate ${dueDate}: ${days}`);
+            return days;
+        }
+
+        // Calculate Days Since Due
+        function calculateDaysSinceDue(dueDate) {
+            const today = new Date();
+            const due = new Date(dueDate);
+            const diffTime = today - due;
+            const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            console.log(`Calculated days since due for dueDate ${dueDate}: ${days}`);
+            return days;
+        }
+
+        // Calculate Debt Amount
+        function calculateDebtAmount(debtorName, state) {
+            const debtor = state.debtors.find(d => d.name.toLowerCase() === debtorName.toLowerCase());
+            if (!debtor) return 0;
+
+            const daysOverdue = calculateDaysSinceDue(debtor.startDate);
+            let debtAmount = Math.floor(daysOverdue / DEBT_INTERVAL) * DEBT_INCREMENT;
+
+            debtor.debtHistory.forEach(h => {
+                if (h.amount < debtAmount) {
+                    debtAmount = h.amount;
+                }
+            });
+
+            console.log(`Calculated debt for ${debtorName}: ${debtAmount} TZS`);
+            return debtAmount;
+        }
+
+        // Start New Round
+        async function startNewRound() {
+            const startDate = document.getElementById('startRoundDate').value;
+            if (!startDate) {
+                showNotification('Tafadhali chagua tarehe ya kuanza!');
+                console.log('Start round failed: no start date');
+                return;
+            }
+
+            const state = loadLocalState();
+            const start = new Date(startDate);
+            const endDate = new Date(start);
+            endDate.setDate(start.getDate() + ROUND_DURATION);
+
+            state.round = {
+                startDate: start.toISOString().split('T')[0],
+                endDate: endDate.toISOString().split('T')[0],
+                active: true
+            };
+
+            state.rounds.push({
+                startDate: state.round.startDate,
+                endDate: state.round.endDate,
+                active: true
+            });
+
+            // Deduplicate tenants
+            state.tenants = deduplicateTenants(state.tenants);
+
+            console.log('New round started:', state.round);
+            saveLocalState(state);
+            saveFirebaseState(state);
+            closePopup('startRoundPopup');
+            displayPayments(state);
+            showNotification(`Round mpya imeanza tarehe ${start.toLocaleDateString('sw-TZ')}!`);
+        }
+
+        // End Round
+        async function endRound() {
+            const endDate = document.getElementById('endRoundDate').value;
+            if (!endDate) {
+                showNotification('Tafadhali chagua tarehe ya kumaliza!');
+                console.log('End round failed: no end date');
+                return;
+            }
+
+            const state = loadLocalState();
+            if (state.round) {
+                state.round.active = false;
+                state.round.endDate = endDate;
+
+                const roundIndex = state.rounds.findIndex(r => r.startDate === state.round.startDate);
+                if (roundIndex !== -1) {
+                    state.rounds[roundIndex].active = false;
+                    state.rounds[roundIndex].endDate = endDate;
+                }
+
+                // Add tenants with expired payments to debtors
+                state.tenants.forEach(tenant => {
+                    const tenantPayments = state.payments.filter(p => p.name.toLowerCase() === tenant.toLowerCase());
+                    const hasValidPayment = tenantPayments.some(p => calculateDaysRemaining(p.dueDate) > 0);
+                    if (!hasValidPayment && !state.debtors.some(d => d.name.toLowerCase() === tenant.toLowerCase())) {
+                        const latestPayment = tenantPayments.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                        const debtStartDate = latestPayment ? latestPayment.dueDate : endDate;
+                        state.debtors.push({
+                            name: tenant,
+                            startDate: debtStartDate,
+                            debtHistory: [{ date: debtStartDate, amount: 1000 }]
+                        });
+                        console.log(`Added debtor: ${tenant}`);
+                    }
+                });
+
+                // Deduplicate tenants
+                state.tenants = deduplicateTenants(state.tenants);
+
+                console.log('Round ended:', state.round);
+                saveLocalState(state);
+                saveFirebaseState(state);
+                closePopup('endRoundPopup');
+                displayPayments(state);
+                displayDebtors(state);
+                showNotification(`Round imemalizika tarehe ${new Date(endDate).toLocaleDateString('sw-TZ')}!`);
+            }
+        }
+
+        // Toggle Debtors
+        function toggleDebtors() {
+            const details = document.getElementById('debtorsDetails');
+            details.classList.toggle('active');
+            console.log('Toggled debtors visibility');
+        }
+
+        // Display Debtors
+        function displayDebtors(state) {
+            const debtorsList = document.getElementById('debtorsList');
+            const debtSummary = document.getElementById('debtSummary');
+            debtorsList.innerHTML = '';
+
+            let totalDebt = 0;
+            const uniqueTenants = deduplicateTenants(state.tenants);
+            uniqueTenants.forEach(tenant => {
+                const lowerTenant = tenant.toLowerCase();
+                const debtor = state.debtors.find(d => d.name.toLowerCase() === lowerTenant);
+                const hasValidPayment = state.payments.some(p => 
+                    p.name.toLowerCase() === lowerTenant && 
+                    calculateDaysRemaining(p.dueDate) > 0
+                );
+
+                // Only show tenants with debt and no valid payments
+                if (debtor && !hasValidPayment) {
+                    const debtAmount = calculateDebtAmount(tenant, state);
+                    if (debtAmount > 0) {
+                        totalDebt += debtAmount;
+                        let debtDetails = `Deni: ${debtAmount.toLocaleString()} TZS<br>`;
+
+                        const weeksOverdue = Math.floor(calculateDaysSinceDue(debtor.startDate) / DEBT_INTERVAL);
+                        for (let i = 0; i < weeksOverdue; i++) {
+                            const weekStart = new Date(debtor.startDate);
+                            weekStart.setDate(weekStart.getDate() + i * DEBT_INTERVAL);
+                            const weekEnd = new Date(weekStart);
+                            weekEnd.setDate(weekEnd.getDate() + DEBT_INTERVAL - 1);
+                            debtDetails += `Tarehe ${weekStart.toLocaleDateString('sw-TZ')} - ${weekEnd.toLocaleDateString('sw-TZ')}: 1000 TZS<br>`;
+                        }
+
+                        debtor.debtHistory.forEach(h => {
+                            if (h.amount < (weeksOverdue * DEBT_INCREMENT)) {
+                                debtDetails += `Tarehe ${new Date(h.date).toLocaleDateString('sw-TZ')}: Malipo yaliyopunguza deni hadi ${h.amount.toLocaleString()} TZS<br>`;
+                            }
+                        });
+
+                        debtDetails += `<button class="clear-debt-btn" onclick="showClearDebtConfirmation('${tenant}')"><i class="fas fa-trash"></i> Futa Deni</button>`;
+
+                        const li = document.createElement('li');
+                        li.innerHTML = `${tenant} - ${debtDetails}`;
+                        debtorsList.appendChild(li);
+                    }
+                }
+            });
+
+            debtSummary.textContent = `Jumla ya Madeni: ${totalDebt.toLocaleString()} TZS`;
+            console.log('Debtors displayed, total debt:', totalDebt);
+        }
+
+        // Show Clear Debt Confirmation
+        function showClearDebtConfirmation(tenantName) {
+            if (protectActions.clearDebt) {
+                promptPassword('clearDebt', () => {
+                    clearDebtIndex = tenantName;
+                    document.getElementById('clearDebtMessage').textContent = `Je, una uhakika unataka kufuta deni la ${tenantName}?`;
+                    document.getElementById('clearDebtConfirmationPopup').style.display = 'block';
+                    console.log(`Clear debt confirmation shown for ${tenantName}`);
+                });
+            } else {
+                clearDebtIndex = tenantName;
+                document.getElementById('clearDebtMessage').textContent = `Je, una uhakika unataka kufuta deni la ${tenantName}?`;
+                document.getElementById('clearDebtConfirmationPopup').style.display = 'block';
+                console.log(`Clear debt confirmation shown for ${tenantName}`);
+            }
+        }
+
+        // Confirm Clear Debt
+        async function confirmClearDebt() {
+            const state = loadLocalState();
+            state.debtors = state.debtors.filter(d => d.name.toLowerCase() !== clearDebtIndex.toLowerCase());
+            // Remove tenant if no payments or debts
+            const hasPayments = state.payments.some(p => p.name.toLowerCase() === clearDebtIndex.toLowerCase());
+            if (!hasPayments) {
+                state.tenants = state.tenants.filter(t => t.toLowerCase() !== clearDebtIndex.toLowerCase());
+                console.log(`Removed tenant ${clearDebtIndex} from tenants list`);
+            }
+            // Deduplicate tenants
+            state.tenants = deduplicateTenants(state.tenants);
+            saveLocalState(state);
+            saveFirebaseState(state);
+            displayDebtors(state);
+            displayPayments(state);
+            populateTenantSelect(state);
+            closePopup('clearDebtConfirmationPopup');
+            showNotification(`Deni la ${clearDebtIndex} limefutwa!`);
+            console.log(`Debt cleared for ${clearDebtIndex}`);
+            clearDebtIndex = -1;
+        }
+
+        // Generate SMS
+        async function generateSMS() {
+            const state = loadLocalState();
+            let message = "Habari wapangaji wenzangu,\n\n";
+            console.log('Generating SMS');
+
+            if (!state.round) {
+                message += "Hakuna round inayoendelea kwa sasa.";
+            } else {
+                const startDate = new Date(state.round.startDate).toLocaleDateString('sw-TZ', {
+                    day: 'numeric',
+                    month: 'numeric',
+                    year: 'numeric'
+                });
+                const endDate = new Date(state.round.endDate).toLocaleDateString('sw-TZ', {
+                    day: 'numeric',
+                    month: 'numeric',
+                    year: 'numeric'
+                });
+
+                // Contributors: Paid in current round with days remaining > 0
+                const contributors = new Set();
+                const currentRoundPayments = state.payments.filter(p => p.roundStart === state.round.startDate);
+                currentRoundPayments.forEach(payment => {
+                    if (calculateDaysRemaining(payment.dueDate) > 0) {
+                        contributors.add(payment.name);
+                    }
+                });
+
+                // Non-contributors: Tenants who haven't paid or have no valid days remaining
+                const uniqueTenants = deduplicateTenants(state.tenants);
+                const nonContributors = uniqueTenants.filter(tenant => {
+                    const tenantPayments = currentRoundPayments.filter(p => p.name.toLowerCase() === tenant.toLowerCase());
+                    return tenantPayments.length === 0 || tenantPayments.every(p => calculateDaysRemaining(p.dueDate) <= 0);
+                });
+
+                if (state.round.active) {
+                    message += `Round ya kuchangia umeme iliyoanza tarehe ${startDate} inaendelea na itaisha tarehe ${endDate}.\n\n`;
+                } else {
+                    message += `Round ya kuchangia umeme iliyoanza tarehe ${startDate} imeisha tarehe ${endDate}.\n\n`;
+                }
+
+                if (contributors.size > 0) {
+                    message += `Waliotoa mchango:\n${Array.from(contributors).join('\n')}\n\n`;
+                } else {
+                    message += `Bado hakuna aliyetoa mchango.\n\n`;
+                }
+
+                if (nonContributors.length > 0) {
+                    message += `Waliobaki:\n${nonContributors.join('\n')}\n\n`;
+                }
+
+                message += "Tafadhali kwa waliopo karibu mlete mchango, na kwa waliopo mbali, tuma pesa kupitia namba ile ile uliyopokelea SMS (0623715858)- jina linatokea kama David Malosha.\n\n";
+                message += "Tuchangie haraka ili tuweze kurejesha umeme mapema.\n\n";
+                message += "Asanteni kwa ushirikiano.";
+            }
+
+            console.log('SMS generated:', message);
+            return message;
+        }
+
+        // Copy SMS
+        async function copySMS() {
+            if (protectActions.copySMS) {
+                promptPassword('copySMS', async () => {
+                    const message = await generateSMS();
+                    navigator.clipboard.writeText(message).then(() => {
+                        showNotification('SMS imecopy!');
+                        console.log('SMS copied to clipboard');
+                    }).catch(err => {
+                        console.error('Failed to copy SMS:', err);
+                        showNotification('Kosa limetokea wakati wa kunakili SMS.');
+                    });
+                });
+            } else {
+                const message = await generateSMS();
+                navigator.clipboard.writeText(message).then(() => {
+                    showNotification('SMS imecopy!');
+                    console.log('SMS copied to clipboard');
+                }).catch(err => {
+                    console.error('Failed to copy SMS:', err);
+                    showNotification('Kosa limetokea wakati wa kunakili SMS.');
+                });
+            }
+        }
+
+        // Populate Tenant Select
+        function populateTenantSelect(state) {
+            const tenantSelect = document.getElementById('tenantSelect');
+            tenantSelect.innerHTML = '<option value="">-- Chagua Jina --</option>';
+            const uniqueTenants = deduplicateTenants(state.tenants);
+            uniqueTenants.forEach(tenant => {
+                const option = document.createElement('option');
+                option.value = tenant;
+                option.textContent = tenant;
+                tenantSelect.appendChild(option);
+            });
+            console.log('Tenant select populated:', uniqueTenants);
+        }
+
+        // Show Tenant Selection Popup
+        function showTenantSelectionPopup() {
+            const state = loadLocalState();
+            populateTenantSelect(state);
+            document.getElementById('tenantSelectionPopup').style.display = 'block';
+            console.log('Tenant selection popup shown');
+        }
+
+        // Show All Payments
+        async function showAllPayments() {
+            const state = loadLocalState();
+            const tenantName = document.getElementById('tenantSelect').value;
+            const allPaymentsList = document.getElementById('allPaymentsList');
+            allPaymentsList.innerHTML = '';
+
+            if (!tenantName) {
+                closePopup('tenantSelectionPopup');
+                console.log('No tenant selected, closing popup');
+                return;
+            }
+
+            closePopup('tenantSelectionPopup');
+            document.getElementById('allPaymentsPopup').style.display = 'block';
+            console.log(`Showing all payments for ${tenantName}`);
+
+            const tenantPayments = state.payments.filter(p => p.name.toLowerCase() === tenantName.toLowerCase());
+            state.rounds.forEach(round => {
+                const payment = tenantPayments.find(p => p.roundStart === round.startDate);
+                const row = document.createElement('tr');
+                const roundInfo = round.active 
+                    ? `Round ilianza ${new Date(round.startDate).toLocaleDateString('sw-TZ')}, inaendelea`
+                    : `Round ilianza ${new Date(round.startDate).toLocaleDateString('sw-TZ')}, ilimalizika ${new Date(round.endDate).toLocaleDateString('sw-TZ')}`;
+
+                row.innerHTML = `
+                    <td data-label="Jina">${tenantName}</td>
+                    <td data-label="Kiasi">${payment ? payment.amount.toLocaleString() + ' TZS' : 'Hakulipa'}</td>
+                    <td data-label="Tarehe">${payment ? payment.date : '-'}</td>
+                    <td data-label="Round Info">${roundInfo}</td>
+                `;
+                allPaymentsList.appendChild(row);
+            });
+
+            // Add payments not tied to any round
+            const nonRoundPayments = tenantPayments.filter(p => !p.roundStart);
+            nonRoundPayments.forEach(payment => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td data-label="Jina">${tenantName}</td>
+                    <td data-label="Kiasi">${payment.amount.toLocaleString()} TZS</td>
+                    <td data-label="Tarehe">${payment.date}</td>
+                    <td data-label="Round Info">Hakuna round</td>
+                `;
+                allPaymentsList.appendChild(row);
+            });
+
+            console.log('All payments displayed for', tenantName);
+        }
+
+        // Display Payments
+        function displayPayments(state) {
+            const paymentList = document.getElementById('paymentList');
+            paymentList.innerHTML = '';
+
+            // Group payments by tenant (case-insensitive)
+            const tenantPayments = {};
+            state.payments.forEach((payment, index) => {
+                const lowerName = payment.name.toLowerCase();
+                if (!tenantPayments[lowerName]) {
+                    tenantPayments[lowerName] = {
+                        name: payment.name,
+                        payments: [],
+                        totalAmount: 0,
+                        latestDueDate: payment.dueDate,
+                        latestDate: payment.date,
+                        indices: []
+                    };
+                }
+                tenantPayments[lowerName].payments.push(payment);
+                tenantPayments[lowerName].totalAmount += payment.amount;
+                tenantPayments[lowerName].indices.push(index);
+                if (new Date(payment.dueDate) > new Date(tenantPayments[lowerName].latestDueDate)) {
+                    tenantPayments[lowerName].latestDueDate = payment.dueDate;
+                }
+                if (new Date(payment.date) > new Date(tenantPayments[lowerName].latestDate)) {
+                    tenantPayments[lowerName].latestDate = payment.date;
+                }
+            });
+
+            // Add tenants with no payments but in debt
+            state.debtors.forEach(debtor => {
+                const lowerName = debtor.name.toLowerCase();
+                if (!tenantPayments[lowerName] && state.tenants.some(t => t.toLowerCase() === lowerName)) {
+                    tenantPayments[lowerName] = {
+                        name: debtor.name,
+                        payments: [],
+                        totalAmount: 0,
+                        latestDueDate: debtor.startDate,
+                        latestDate: debtor.startDate,
+                        indices: []
+                    };
+                }
+            });
+
+            // Add tenants with no payments or debts
+            state.tenants.forEach(tenant => {
+                const lowerName = tenant.toLowerCase();
+                if (!tenantPayments[lowerName] && !state.debtors.some(d => d.name.toLowerCase() === lowerName)) {
+                    tenantPayments[lowerName] = {
+                        name: tenant,
+                        payments: [],
+                        totalAmount: 0,
+                        latestDueDate: new Date().toISOString().split('T')[0],
+                        latestDate: new Date().toISOString().split('T')[0],
+                        indices: []
+                    };
+                }
+            });
+
+            // Convert to array and sort
+            const tenantArray = Object.values(tenantPayments).map(tenant => ({
+                ...tenant,
+                daysRemaining: tenant.payments.length > 0 ? calculateDaysRemaining(tenant.latestDueDate) : -1
+            }));
+
+            // Sort: Valid payments first (by days remaining), then non-payers (alphabetically)
+            tenantArray.sort((a, b) => {
+                if (a.daysRemaining > 0 && b.daysRemaining > 0) {
+                    return b.daysRemaining - a.daysRemaining; // Highest days remaining first
+                } else if (a.daysRemaining > 0) {
+                    return -1; // Valid payments first
+                } else if (b.daysRemaining > 0) {
+                    return 1;
+                } else {
+                    return a.name.localeCompare(b.name); // Alphabetical for non-payers
+                }
+            });
+
+            if (tenantArray.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="6">Hakuna malipo yaliyorekodiwa.</td>';
+                paymentList.appendChild(row);
+                console.log('No tenants to display');
+                return;
+            }
+
+            tenantArray.forEach(tenant => {
+                const daysRemaining = tenant.daysRemaining;
+                const row = document.createElement('tr');
+
+                let statusClass = '';
+                let statusText = '';
+                let roundInfo = state.round && tenant.payments.some(p => p.roundStart === state.round.startDate)
+                    ? (state.round.active 
+                        ? `Round ilianza ${new Date(state.round.startDate).toLocaleDateString('sw-TZ')}, inaendelea` 
+                        : `Round ilianza ${new Date(state.round.startDate).toLocaleDateString('sw-TZ')}, ilimalizika ${new Date(state.round.endDate).toLocaleDateString('sw-TZ')}`)
+                    : 'Hakuna round';
+
+                if (daysRemaining > 2) {
+                    statusClass = 'days-normal';
+                    statusText = `${daysRemaining} siku zilizobaki`;
+                } else if (daysRemaining > 0) {
+                    statusClass = 'days-warning';
+                    statusText = `${daysRemaining} siku zilizobaki`;
+                } else {
+                    row.classList.add('overdue-row');
+                    const daysOverdue = calculateDaysSinceDue(tenant.latestDueDate);
+                    statusText = `<span class="overdue">Anadaiwa (Siku ${daysOverdue} toka ${tenant.latestDueDate})</span>`;
+                }
+
+                // Use the first payment index for actions (if any)
+                const actionIndex = tenant.indices.length > 0 ? tenant.indices[0] : -1;
+
+                row.innerHTML = `
+                    <td data-label="Jina"><span class="tenant-name" onclick="showTenantHistory('${tenant.name}')">${tenant.name}</span></td>
+                    <td data-label="Kiasi">${tenant.totalAmount.toLocaleString()} TZS</td>
+                    <td data-label="Tarehe">${tenant.payments.length > 0 ? tenant.latestDate : '-'}</td>
+                    <td data-label="Siku Zilizobaki"><span class="${statusClass}">${statusText}</span></td>
+                    <td data-label="Round Info">${roundInfo}</td>
+                    <td data-label="Actions">
+                        <button class="pay-btn" onclick="preparePayment('${tenant.name}', ${actionIndex})"><i class="fas fa-check"></i> Lipa</button>
+                        <button class="delete-btn" onclick="showDeleteConfirmation('${tenant.name}', ${actionIndex})"><i class="fas fa-trash"></i> Futa</button>
+                    </td>
+                `;
+                paymentList.appendChild(row);
+            });
+
+            console.log('Payments displayed:', tenantArray.length);
+        }
+
+                // Show Tenant History
+        async function showTenantHistory(tenantName) {
+            const state = loadLocalState();
+            const payments = state.payments.filter(p => p.name.toLowerCase() === tenantName.toLowerCase());
+            const debtor = state.debtors.find(d => d.name.toLowerCase() === tenantName.toLowerCase());
+            let content = `<p><strong>Malipo ya ${tenantName}</strong></p>`;
+
+            if (payments.length > 0) {
+                content += '<ul>';
+                payments.forEach(p => {
+                    content += `<li>Tarehe ${p.date}: ${p.amount.toLocaleString()} TZS (Due: ${p.dueDate})</li>`;
+                });
+                content += '</ul>';
+            } else {
+                content += '<p>Hakuna malipo yaliyorekodiwa.</p>';
+            }
+
+            if (debtor) {
+                const debtAmount = calculateDebtAmount(tenantName, state);
+                content += `<p><strong>Deni: ${debtAmount.toLocaleString()} TZS</strong></p>`;
+                content += '<p>Historia ya Deni:</p><ul>';
+                debtor.debtHistory.forEach(h => {
+                    content += `<li>Tarehe ${h.date}: Deni ${h.amount.toLocaleString()} TZS</li>`;
+                });
+                content += '</ul>';
+            } else {
+                content += '<p>Hakuna deni lililorekodiwa.</p>';
+            }
+
+            document.getElementById('tenantHistoryContent').innerHTML = content;
+            document.getElementById('tenantHistoryPopup').style.display = 'block';
+            console.log(`Tenant history shown for ${tenantName}`);
+        }
+
+        // Show Delete Confirmation
+        function showDeleteConfirmation(tenantName, index) {
+            if (protectActions.delete) {
+                promptPassword('delete', () => {
+                    deleteIndex = index;
+                    document.getElementById('deleteMessage').textContent = `Je, una uhakika unataka kufuta rekodi zote za ${tenantName}, ikiwemo malipo yake yote na deni?`;
+                    document.getElementById('deleteConfirmationPopup').style.display = 'block';
+                    console.log(`Delete confirmation shown for ${tenantName}, index: ${index}`);
+                });
+            } else {
+                deleteIndex = index;
+                document.getElementById('deleteMessage').textContent = `Je, una uhakika unataka kufuta rekodi zote za ${tenantName}, ikiwemo malipo yake yote na deni?`;
+                document.getElementById('deleteConfirmationPopup').style.display = 'block';
+                console.log(`Delete confirmation shown for ${tenantName}, index: ${index}`);
+            }
+        }
+
+        // Confirm Delete
+        async function confirmDelete() {
+            const state = loadLocalState();
+            const tenantName = state.payments[deleteIndex]?.name || state.debtors.find(d => d.name.toLowerCase() === state.tenants[deleteIndex]?.toLowerCase())?.name || state.tenants[deleteIndex];
+
+            if (!tenantName) {
+                showNotification('Mpangaji huyu hayupo tena!');
+                closePopup('deleteConfirmationPopup');
+                console.log('Delete failed: tenant not found');
+                return;
+            }
+
+            const lowerTenantName = tenantName.toLowerCase();
+
+            // Remove all payments for the tenant
+            state.payments = state.payments.filter(p => p.name.toLowerCase() !== lowerTenantName);
+
+            // Remove debtor record
+            state.debtors = state.debtors.filter(d => d.name.toLowerCase() !== lowerTenantName);
+
+            // Remove tenant from tenants list
+            state.tenants = state.tenants.filter(t => t.toLowerCase() !== lowerTenantName);
+
+            // Deduplicate tenants
+            state.tenants = deduplicateTenants(state.tenants);
+
+            saveLocalState(state);
+            saveFirebaseState(state);
+            displayPayments(state);
+            displayDebtors(state);
+            populateTenantSelect(state);
+            closePopup('deleteConfirmationPopup');
+            showNotification(`Rekodi za ${tenantName} zimefutwa kabisa!`);
+            console.log(`Deleted all records for ${tenantName}`);
+            deleteIndex = -1;
+        }
+
+        // Prepare Payment
+        function preparePayment(tenantName, index) {
+            if (protectActions.pay) {
+                promptPassword('pay', () => {
+                    editIndex = index;
+                    const state = loadLocalState();
+                    const payment = state.payments[index];
+                    document.getElementById('tenantName').value = tenantName;
+                    document.getElementById('tenantName').setAttribute('readonly', 'true');
+                    document.getElementById('amount').value = payment ? payment.amount : '';
+                    document.getElementById('date').value = payment ? payment.date : new Date().toISOString().split('T')[0];
+                    document.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-edit"></i> Badilisha Malipo';
+                    console.log(`Preparing payment for ${tenantName}, index: ${index}`);
+                });
+            } else {
+                editIndex = index;
+                const state = loadLocalState();
+                const payment = state.payments[index];
+                document.getElementById('tenantName').value = tenantName;
+                document.getElementById('tenantName').setAttribute('readonly', 'true');
+                document.getElementById('amount').value = payment ? payment.amount : '';
+                document.getElementById('date').value = payment ? payment.date : new Date().toISOString().split('T')[0];
+                document.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-edit"></i> Badilisha Malipo';
+                console.log(`Preparing payment for ${tenantName}, index: ${index}`);
+            }
+        }
+
+        // Update Debts
+        function updateDebts(state = loadLocalState()) {
+            const today = new Date();
+            state.tenants.forEach(tenant => {
+                const lowerTenant = tenant.toLowerCase();
+                const tenantPayments = state.payments.filter(p => p.name.toLowerCase() === lowerTenant);
+                const hasValidPayment = tenantPayments.some(p => calculateDaysRemaining(p.dueDate) > 0);
+
+                if (!hasValidPayment && !state.debtors.some(d => d.name.toLowerCase() === lowerTenant)) {
+                    const latestPayment = tenantPayments.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                    const debtStartDate = latestPayment ? latestPayment.dueDate : today.toISOString().split('T')[0];
+                    state.debtors.push({
+                        name: tenant,
+                        startDate: debtStartDate,
+                        debtHistory: [{ date: debtStartDate, amount: DEBT_INCREMENT }]
+                    });
+                    console.log(`Added debtor ${tenant} with start date ${debtStartDate}`);
+                }
+            });
+
+            state.debtors = state.debtors.filter(debtor => {
+                const hasValidPayment = state.payments.some(p => 
+                    p.name.toLowerCase() === debtor.name.toLowerCase() && 
+                    calculateDaysRemaining(p.dueDate) > 0
+                );
+                return !hasValidPayment;
+            });
+
+            // Deduplicate tenants
+            state.tenants = deduplicateTenants(state.tenants);
+
+            saveLocalState(state);
+            saveFirebaseState(state);
+            displayDebtors(state);
+            console.log('Debts updated');
+        }
+
+        // Initialize Firebase on Page Load
+        if (isFirebaseInitialized && navigator.onLine) {
+            db.ref('.info/connected').on('value', snap => {
+                if (snap.val() === true) {
+                    console.log('Connected to Firebase');
+                    syncWithFirebase(loadLocalState()).then(state => {
+                        displayPayments(state);
+                        displayDebtors(state);
+                        populateTenantSelect(state);
+                    });
+                } else {
+                    console.log('Disconnected from Firebase');
+                    showNotification('No internet connection. Using local data.');
+                }
+            });
+        }
+
+        // Handle Offline Mode
+        window.addEventListener('offline', () => {
+            showNotification('No internet connection. Working offline.');
+            console.log('Switched to offline mode');
+        });
+
+        window.addEventListener('online', () => {
+            showNotification('Internet connection restored. Syncing with Firebase.');
+            console.log('Switched to online mode');
+            if (isFirebaseInitialized) {
+                syncWithFirebase(loadLocalState()).then(state => {
+                    displayPayments(state);
+                    displayDebtors(state);
+                    populateTenantSelect(state);
+                });
+            }
+        });
+
+        // Ensure deduplication on state changes
+        function onStateChange(state) {
+            state.tenants = deduplicateTenants(state.tenants);
+            saveLocalState(state);
+            saveFirebaseState(state);
+            displayPayments(state);
+            displayDebtors(state);
+            populateTenantSelect(state);
+            console.log('State updated with deduplicated tenants');
+        }
+
+    </script>
+</body>
+</html>
